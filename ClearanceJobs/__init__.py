@@ -3,12 +3,6 @@ from datetime import datetime
 from dataclasses import dataclass
 
 import requests
-import sqlalchemy as sa
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker
-from pandas import pandas as pd
-from .models import People, Base
-from .schema import PeopleSchema
 
 
 @dataclass
@@ -20,12 +14,8 @@ class ClearanceJobs:
     username: str
     password: str
     url: str = 'https://api.clearancejobs.com/api/v1'
-    engine_url: str = 'sqlite:///db.clearancejobs'
 
     def __post_init__(self):
-        self.engine = sa.create_engine(self.engine_url)
-        self.sql_session = scoped_session(sessionmaker(bind=self.engine))
-        Base.metadata.create_all(self.engine)
         self.session = requests.Session()
         self.session.headers.update({
             'Accept': 'application/json',
@@ -65,7 +55,6 @@ class ClearanceJobs:
             logging.error(e)
 
         return resp
-
 
     def login(self) -> str:
         body = {
@@ -118,29 +107,5 @@ class ClearanceJobs:
             "sort_info":"timestamp desc"
         }
         resp = self.post('/resumes/search', body)
-        data = resp.json()['data']
-        data = self.parse_data(data)
-        for d in data:
-            people = People(**d)
-            self.sql_session.add(people)
-        self.sql_session.commit()
-
-    def get_all_people(self):
-        people_schema = PeopleSchema(many=True)
-        sql_data = people_schema.dump(self.sql_session.query(People).all())
-        return sql_data.data
-
-    def parse_data(self, list_data: list) -> list:
-        columns = {c.name: c.type for c in People.__table__.c }
-        new_data = []
-        for data in list_data:
-            temp_dic = {}
-            for key in data.keys():
-                if key in columns.keys():
-                    temp_dic[key]=data[key]
-                    if isinstance(columns[key], sa.DateTime) and data[key]:
-                        temp_dic[key]=datetime.strptime(
-                            data[key], '%Y-%m-%dT%H:%M:%S-05:00'
-                        )
-            new_data.append(temp_dic)
-        return new_data
+        data = resp.json()
+        return data
