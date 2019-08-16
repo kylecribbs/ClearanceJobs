@@ -30,10 +30,6 @@
             ],
             "version": "==3.0.4"
         },
-        "clearancejobs": {
-            "editable": true,
-            "path": "."
-        },
         "idna": {
             "hashes": [
                 "sha256:c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407",
