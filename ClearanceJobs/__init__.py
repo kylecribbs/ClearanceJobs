@@ -10,16 +10,12 @@ class ClearanceJobs:
     """Initialize ClearanceJobs class.
 
     Args:
-        username (str): Username for clearance job
-        password (str): Password for clearance job
         url (str): Default https://api.clearancejobs.com/api/v1. Specify API
         url. Only update if it changes.
 
     Attributes:
         session (request.Session): Session object for making requests.
     """
-    username: str
-    password: str
     url: str = 'https://api.clearancejobs.com/api/v1'
 
     def __post_init__(self):
@@ -33,6 +29,28 @@ class ClearanceJobs:
             'X-Requested-With': 'XMLHttpRequest',
             'Sec-Fetch-Mode': 'cors'
         })
+
+    def update_session(self, csrf, laravel_token):
+        """Updates session for making request.
+
+        The Requests session can be updated with a CSRF token and
+        a laravel_token. This can function is used so that the CSRF and 
+        laravel_token can be saved somewhere like redis. 
+
+        Args:
+            csrf (str): X-CSRF-TOKEN .
+            laravel_token: Laravel token used to set the session cookies.
+        """
+        domain = self.url.split("/")[2]
+        self.session.headers.update({
+            'X-CSRF-TOKEN': csrf
+        })
+        self.session.cookies.set(
+            'laravel_token', 
+            laravel_token, 
+            domain=domain,
+            path='/'
+        )
 
     def get(self, route: str) -> requests.models.Response:
         """GET request wrapper for Clearance Jobs.
@@ -65,18 +83,22 @@ class ClearanceJobs:
 
         return resp.json()
 
-    def login(self) -> str:
+    def login(self, username, password) -> str:
         """Login for Clearance Jobs API.
 
         Logs into Clearance Jobs and gets a csrf_token used for subsequent
         api calls.
 
+        Args:
+            username (str): Username for clearance job
+            password (str): Password for clearance job
+
         Returns:
             csrf (str): CSRF Token.
         """
         body = {
-            "username": self.username,
-            "password": self.password
+            "username": username,
+            "password": password
         }
         resp = self.post('/auth/login', body)
         csrf = resp['csrf_token']
