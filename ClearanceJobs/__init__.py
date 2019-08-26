@@ -65,7 +65,7 @@ class ClearanceJobs:
         resp = self.session.get(url)
         resp.raise_for_status()
 
-        return resp.json()
+        return resp
 
     def post(self, route: str, body: dict) -> requests.models.Response:
         """POST request wrapper for Clearance Jobs.
@@ -81,7 +81,7 @@ class ClearanceJobs:
         resp = self.session.post(url, json=body)
         resp.raise_for_status()
 
-        return resp.json()
+        return resp
 
     def login(self, username, password) -> str:
         """Login for Clearance Jobs API.
@@ -100,7 +100,7 @@ class ClearanceJobs:
             "username": username,
             "password": password
         }
-        resp = self.post('/auth/login', body)
+        resp = self.post('/auth/login', body).json()
         csrf = resp['csrf_token']
         self.session.headers.update({
             'X-CSRF-TOKEN': csrf
@@ -179,6 +179,7 @@ class ClearanceJobs:
 
         data = self.post('/resumes/search', body)
         if auto_paginate:
+            data = data.json()
             pages = data['meta']['pagination']['total_pages']
             if pages>1:
                 for i in range(1,pages):
