@@ -185,6 +185,6 @@ class ClearanceJobs:
                 for i in range(1,pages):
                     i = i + 1
                     body['page'] = i
-                    temp_data = self.post('/resumes/search', body)
+                    temp_data = self.post('/resumes/search', body).json()
                     data['data'].extend(temp_data['data'])
         return data
